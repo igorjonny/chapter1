@@ -4,24 +4,31 @@ import styles from "./Post.module.css";
 
 import { format, formatDistanceToNow } from "date-fns";
 import ptBr from "date-fns/locale/pt-BR";
-import { useState } from "react";
+import { ChangeEvent, FormEvent, InvalidEvent, useState } from "react";
 
-interface AuthorProps {
+interface Author {
   avatarUrl: string;
   name: string;
   role: string;
 }
 
-interface PostProps {
-  author: AuthorProps;
+interface Content {
+  type: "paragraph" | "link";
   content: string;
+}
+
+interface PostProps {
+  author: Author;
+  content: Content[];
   publishedAt: Date;
 }
 
 export function Post({ author, content, publishedAt }: PostProps) {
-  const [comments, setComments] = useState<string[]>(["Post muito bacana"]);
+  const [comments, setComments] = useState(["Post muito bacana"]);
 
   const [newCommentText, setNewCommentText] = useState("");
+
+  console.log(newCommentText);
 
   const publishedDateFormatted = format(
     publishedAt,
@@ -34,18 +41,23 @@ export function Post({ author, content, publishedAt }: PostProps) {
     addSuffix: true,
   });
 
-  function handleCreateNewComment(e) {
-    e.preventDefault();
+  function handleCreateNewComment(event: FormEvent) {
+    event.preventDefault();
 
     setComments([...comments, newCommentText]);
     setNewCommentText("");
   }
 
-  function handleNewCommentChange() {
+  function handleNewCommentChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    event.target.setCustomValidity("");
     setNewCommentText(event?.target.value);
   }
 
-  function deleteComment(commentToDelete) {
+  function handleNewCommentInvalid(event: InvalidEvent<HTMLTextAreaElement>) {
+    event.target.setCustomValidity("Esse campo é obrigatorio!");
+  }
+
+  function deleteComment(commentToDelete: string) {
     const commentsWithoutDeletedOne = comments.filter((comment) => {
       return comment !== commentToDelete;
     });
@@ -53,9 +65,7 @@ export function Post({ author, content, publishedAt }: PostProps) {
     setComments(commentsWithoutDeletedOne);
   }
 
-  function handleNewCommentInvalid() {
-    console.log(event);
-  }
+  const isNewCommentEmpty = newCommentText === "";
 
   return (
     <article className={styles.post}>
@@ -101,7 +111,9 @@ export function Post({ author, content, publishedAt }: PostProps) {
           onInvalid={handleNewCommentInvalid}
         />
         <footer>
-          <button type="submit">Publicar</button>
+          <button type="submit" disabled={isNewCommentEmpty}>
+            Publicar
+          </button>
         </footer>
       </form>
 
